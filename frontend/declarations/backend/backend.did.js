@@ -2,7 +2,7 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     'convertTextToSpeech' : IDL.Func(
         [IDL.Text, IDL.Text],
-        [IDL.Opt(IDL.Vec(IDL.Nat8))],
+        [IDL.Opt(IDL.Text)],
         [],
       ),
   });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Container, Paper, Typography, TextField, Button, Box, CircularProgress } from '@mui/material';
 import { styled } from '@mui/system';
 import SendIcon from '@mui/icons-material/Send';
@@ -34,6 +34,8 @@ const App: React.FC = () => {
   const [messages, setMessages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState('english');
+  const [audioSrc, setAudioSrc] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { control, handleSubmit, reset } = useForm<FormData>();
 
   const onSubmit = async (data: FormData) => {
@@ -43,8 +45,7 @@ const App: React.FC = () => {
       try {
         const result = await backend.convertTextToSpeech(data.text, currentLanguage);
         if (result) {
-          // In a real app, we would play the audio here
-          console.log('Audio data received:', result);
+          setAudioSrc(result);
         } else {
           console.error('Failed to convert text to speech');
         }
@@ -54,6 +55,13 @@ const App: React.FC = () => {
         setIsLoading(false);
       }
       reset();
+    }
+  };
+
+  const playAudio = () => {
+    if (audioSrc && audioRef.current) {
+      audioRef.current.src = audioSrc;
+      audioRef.current.play();
     }
   };
 
@@ -115,11 +123,13 @@ const App: React.FC = () => {
           variant="contained"
           color="secondary"
           startIcon={isLoading ? <CircularProgress size={24} color="inherit" /> : <PlayArrowIcon />}
-          disabled={isLoading || messages.length === 0}
+          disabled={isLoading || !audioSrc}
+          onClick={playAudio}
         >
           {isLoading ? 'Converting...' : 'Play'}
         </Button>
       </Box>
+      <audio ref={audioRef} style={{ display: 'none' }} />
       <Typography variant="caption" display="block" align="center" mt={2}>
         Background image by{' '}
         <a href="https://unsplash.com/photos/polar-bear-in-body-of-water-photography-LfGqCrLmhp0" target="_blank" rel="noopener noreferrer">
