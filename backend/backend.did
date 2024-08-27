@@ -1,0 +1,3 @@
+service : {
+  convertTextToSpeech: (text, text) -> (opt blob);
+}
