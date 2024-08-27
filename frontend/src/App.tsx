@@ -45,15 +45,15 @@ const App: React.FC = () => {
       setIsLoading(true);
       try {
         const result = await backend.convertTextToSpeech(data.text, currentLanguage);
-        if (result) {
+        if (result && typeof result === 'string') {
           setAudioSrc(result);
           console.log('Received audio data:', result);
         } else {
-          setError('Failed to convert text to speech');
+          throw new Error('Invalid audio data received');
         }
       } catch (error) {
         console.error('Error converting text to speech:', error);
-        setError('Error converting text to speech');
+        setError('Error converting text to speech: ' + (error instanceof Error ? error.message : String(error)));
       } finally {
         setIsLoading(false);
       }
@@ -69,7 +69,7 @@ const App: React.FC = () => {
           throw new Error('Audio source is not a string');
         }
         // Extract the base64 data from the data URL
-        const base64Data = audioSrc.split(',')[1];
+        const [, base64Data] = audioSrc.split(',');
         if (!base64Data) {
           throw new Error('Invalid audio data format');
         }
@@ -88,7 +88,7 @@ const App: React.FC = () => {
         audioRef.current.src = objectUrl;
         audioRef.current.play().catch(e => {
           console.error('Error playing audio:', e);
-          setError('Error playing audio');
+          setError('Error playing audio: ' + e.message);
         });
       } catch (error) {
         console.error('Error processing audio data:', error);
