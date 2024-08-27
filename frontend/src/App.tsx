@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Container, Paper, Typography, TextField, Button, Box, CircularProgress, Snackbar } from '@mui/material';
 import { styled } from '@mui/system';
 import SendIcon from '@mui/icons-material/Send';
@@ -39,6 +39,18 @@ const App: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { control, handleSubmit, reset } = useForm<FormData>();
 
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.onended = () => {
+        console.log('Audio playback ended');
+      };
+      audioRef.current.onerror = (e) => {
+        console.error('Audio playback error:', e);
+        setError('Error playing audio: ' + (e as ErrorEvent).message);
+      };
+    }
+  }, []);
+
   const onSubmit = async (data: FormData) => {
     if (data.text.trim()) {
       setMessages([...messages, data.text]);
@@ -51,7 +63,7 @@ const App: React.FC = () => {
         }
         if (result.startsWith('data:audio/mp3;base64,')) {
           setAudioSrc(result);
-          console.log('Received audio data:', result);
+          console.log('Received audio data:', result.substring(0, 100) + '...');
         } else {
           throw new Error('Invalid audio data format received');
         }
@@ -66,14 +78,20 @@ const App: React.FC = () => {
   };
 
   const playAudio = () => {
-    if (audioSrc && audioRef.current) {
+    if (audioSrc) {
       try {
-        console.log('Playing audio source:', audioSrc);
-        audioRef.current.src = audioSrc;
-        audioRef.current.play().catch(e => {
-          console.error('Error playing audio:', e);
-          setError('Error playing audio: ' + e.message);
-        });
+        console.log('Playing audio source');
+        const audio = new Audio(audioSrc);
+        audio.oncanplaythrough = () => {
+          audio.play().catch(e => {
+            console.error('Error playing audio:', e);
+            setError('Error playing audio: ' + e.message);
+          });
+        };
+        audio.onerror = (e) => {
+          console.error('Error loading audio:', e);
+          setError('Error loading audio: ' + (e as ErrorEvent).message);
+        };
       } catch (error) {
         console.error('Error processing audio data:', error);
         setError('Error processing audio data: ' + (error instanceof Error ? error.message : String(error)));
