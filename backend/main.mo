@@ -21,6 +21,7 @@ actor {
       return null;
     };
     
+    Debug.print("Returning audio data: " # dummyAudioData);
     ?dummyAudioData
   };
 }

@@ -47,6 +47,7 @@ const App: React.FC = () => {
         const result = await backend.convertTextToSpeech(data.text, currentLanguage);
         if (result) {
           setAudioSrc(result);
+          console.log('Received audio data:', result);
         } else {
           setError('Failed to convert text to speech');
         }
@@ -63,8 +64,15 @@ const App: React.FC = () => {
   const playAudio = () => {
     if (audioSrc && audioRef.current) {
       try {
+        console.log('Audio source:', audioSrc);
+        if (typeof audioSrc !== 'string') {
+          throw new Error('Audio source is not a string');
+        }
         // Extract the base64 data from the data URL
         const base64Data = audioSrc.split(',')[1];
+        if (!base64Data) {
+          throw new Error('Invalid audio data format');
+        }
         // Decode the base64 string
         const decodedData = atob(base64Data);
         // Create a Uint8Array from the decoded data
@@ -84,8 +92,10 @@ const App: React.FC = () => {
         });
       } catch (error) {
         console.error('Error processing audio data:', error);
-        setError('Error processing audio data');
+        setError('Error processing audio data: ' + (error instanceof Error ? error.message : String(error)));
       }
+    } else {
+      setError('No audio data available');
     }
   };
 
