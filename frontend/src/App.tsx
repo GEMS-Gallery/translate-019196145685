@@ -45,11 +45,15 @@ const App: React.FC = () => {
       setIsLoading(true);
       try {
         const result = await backend.convertTextToSpeech(data.text, currentLanguage);
-        if (result && typeof result === 'string') {
+        console.log('Received result:', result);
+        if (result.startsWith('ERROR:')) {
+          throw new Error(result);
+        }
+        if (result.startsWith('data:audio/mp3;base64,')) {
           setAudioSrc(result);
           console.log('Received audio data:', result);
         } else {
-          throw new Error('Invalid audio data received');
+          throw new Error('Invalid audio data format received');
         }
       } catch (error) {
         console.error('Error converting text to speech:', error);
@@ -64,28 +68,8 @@ const App: React.FC = () => {
   const playAudio = () => {
     if (audioSrc && audioRef.current) {
       try {
-        console.log('Audio source:', audioSrc);
-        if (typeof audioSrc !== 'string') {
-          throw new Error('Audio source is not a string');
-        }
-        // Extract the base64 data from the data URL
-        const [, base64Data] = audioSrc.split(',');
-        if (!base64Data) {
-          throw new Error('Invalid audio data format');
-        }
-        // Decode the base64 string
-        const decodedData = atob(base64Data);
-        // Create a Uint8Array from the decoded data
-        const uintArray = new Uint8Array(decodedData.length);
-        for (let i = 0; i < decodedData.length; ++i) {
-          uintArray[i] = decodedData.charCodeAt(i);
-        }
-        // Create a Blob from the Uint8Array
-        const blob = new Blob([uintArray], { type: 'audio/mp3' });
-        // Create an object URL from the Blob
-        const objectUrl = URL.createObjectURL(blob);
-        // Set the object URL as the audio source
-        audioRef.current.src = objectUrl;
+        console.log('Playing audio source:', audioSrc);
+        audioRef.current.src = audioSrc;
         audioRef.current.play().catch(e => {
           console.error('Error playing audio:', e);
           setError('Error playing audio: ' + e.message);
