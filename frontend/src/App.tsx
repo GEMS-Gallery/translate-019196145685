@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Container, Paper, Typography, TextField, Button, Box, CircularProgress } from '@mui/material';
+import { Container, Paper, Typography, TextField, Button, Box, CircularProgress, Snackbar } from '@mui/material';
 import { styled } from '@mui/system';
 import SendIcon from '@mui/icons-material/Send';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -35,6 +35,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState('english');
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { control, handleSubmit, reset } = useForm<FormData>();
 
@@ -47,10 +48,11 @@ const App: React.FC = () => {
         if (result) {
           setAudioSrc(result);
         } else {
-          console.error('Failed to convert text to speech');
+          setError('Failed to convert text to speech');
         }
       } catch (error) {
         console.error('Error converting text to speech:', error);
+        setError('Error converting text to speech');
       } finally {
         setIsLoading(false);
       }
@@ -60,8 +62,30 @@ const App: React.FC = () => {
 
   const playAudio = () => {
     if (audioSrc && audioRef.current) {
-      audioRef.current.src = audioSrc;
-      audioRef.current.play();
+      try {
+        // Extract the base64 data from the data URL
+        const base64Data = audioSrc.split(',')[1];
+        // Decode the base64 string
+        const decodedData = atob(base64Data);
+        // Create a Uint8Array from the decoded data
+        const uintArray = new Uint8Array(decodedData.length);
+        for (let i = 0; i < decodedData.length; ++i) {
+          uintArray[i] = decodedData.charCodeAt(i);
+        }
+        // Create a Blob from the Uint8Array
+        const blob = new Blob([uintArray], { type: 'audio/mp3' });
+        // Create an object URL from the Blob
+        const objectUrl = URL.createObjectURL(blob);
+        // Set the object URL as the audio source
+        audioRef.current.src = objectUrl;
+        audioRef.current.play().catch(e => {
+          console.error('Error playing audio:', e);
+          setError('Error playing audio');
+        });
+      } catch (error) {
+        console.error('Error processing audio data:', error);
+        setError('Error processing audio data');
+      }
     }
   };
 
@@ -136,6 +160,12 @@ const App: React.FC = () => {
           Unsplash
         </a>
       </Typography>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+        message={error}
+      />
     </Container>
   );
 };
