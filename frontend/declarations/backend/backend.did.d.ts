@@ -4,6 +4,7 @@ import type { IDL } from '@dfinity/candid';
 
 export interface _SERVICE {
   'convertTextToSpeech' : ActorMethod<[string, string], string>,
+  'healthCheck' : ActorMethod<[], boolean>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

@@ -1,3 +1,4 @@
 service : {
   convertTextToSpeech: (text, text) -> (text);
+  healthCheck: () -> (bool);
 }

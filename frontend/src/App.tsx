@@ -40,6 +40,22 @@ const App: React.FC = () => {
   const { control, handleSubmit, reset } = useForm<FormData>();
 
   useEffect(() => {
+    const checkBackendHealth = async () => {
+      try {
+        const isHealthy = await backend.healthCheck();
+        if (!isHealthy) {
+          setError('Backend is not responding. Please try again later.');
+        }
+      } catch (error) {
+        console.error('Health check failed:', error);
+        setError('Unable to connect to the backend. Please try again later.');
+      }
+    };
+
+    checkBackendHealth();
+  }, []);
+
+  useEffect(() => {
     if (audioRef.current) {
       audioRef.current.onended = () => {
         console.log('Audio playback ended');
@@ -55,6 +71,7 @@ const App: React.FC = () => {
     if (data.text.trim()) {
       setMessages([...messages, data.text]);
       setIsLoading(true);
+      setError(null);
       try {
         const result = await backend.convertTextToSpeech(data.text, currentLanguage);
         console.log('Received result:', result);
@@ -69,7 +86,7 @@ const App: React.FC = () => {
         }
       } catch (error) {
         console.error('Error converting text to speech:', error);
-        setError('Error converting text to speech: ' + (error instanceof Error ? error.message : String(error)));
+        setError('Error converting text to speech. Please try again.');
       } finally {
         setIsLoading(false);
       }
@@ -85,19 +102,19 @@ const App: React.FC = () => {
         audio.oncanplaythrough = () => {
           audio.play().catch(e => {
             console.error('Error playing audio:', e);
-            setError('Error playing audio: ' + e.message);
+            setError('Error playing audio. Please try again.');
           });
         };
         audio.onerror = (e) => {
           console.error('Error loading audio:', e);
-          setError('Error loading audio: ' + (e as ErrorEvent).message);
+          setError('Error loading audio. Please try again.');
         };
       } catch (error) {
         console.error('Error processing audio data:', error);
-        setError('Error processing audio data: ' + (error instanceof Error ? error.message : String(error)));
+        setError('Error processing audio data. Please try again.');
       }
     } else {
-      setError('No audio data available');
+      setError('No audio data available. Please convert text first.');
     }
   };
 
